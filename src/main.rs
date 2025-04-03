@@ -7,12 +7,15 @@
 use bsp::entry;
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::OutputPin;
+use embedded_hal::pwm::SetDutyCycle;
 use panic_probe as _;
 
 // Provide an alias for our BSP so we can switch targets quickly.
 // Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
-use rp_pico as bsp;
+use rp_pico::{
+    self as bsp,
+    hal::{self},
+};
 // use sparkfun_pro_micro_rp2040 as bsp;
 
 use bsp::hal::{
@@ -21,6 +24,12 @@ use bsp::hal::{
     sio::Sio,
     watchdog::Watchdog,
 };
+
+/// The minimum PWM value (i.e. LED brightness) we want
+const LOW: u16 = 0;
+
+/// The maximum PWM value (i.e. LED brightness) we want
+const HIGH: u16 = 65535;
 
 #[entry]
 fn main() -> ! {
@@ -53,24 +62,32 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // This is the correct pin on the Raspberry Pico board. On other boards, even if they have an
-    // on-board LED, it might need to be changed.
-    //
-    // Notably, on the Pico W, the LED is not connected to any of the RP2040 GPIOs but to the cyw43 module instead.
-    // One way to do that is by using [embassy](https://github.com/embassy-rs/embassy/blob/main/examples/rp/src/bin/wifi_blinky.rs)
-    //
-    // If you have a Pico W and want to toggle a LED with a simple GPIO output pin, you can connect an external
-    // LED to one of the GPIO pins, and reference that pin here. Don't forget adding an appropriate resistor
-    // in series with the LED.
-    let mut led_pin = pins.led.into_push_pull_output();
+    // Init PWMs
+    let mut pwm_slices = hal::pwm::Slices::new(pac.PWM, &mut pac.RESETS);
+
+    // Configure PWM4
+    let pwm = &mut pwm_slices.pwm4;
+    pwm.set_ph_correct();
+    pwm.enable();
+
+    // Output channel B on PWM4 to GPIO 25
+    let channel = &mut pwm.channel_b;
+    channel.output_to(pins.led);
 
     loop {
-        info!("on!");
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        info!("off!");
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+        // Ramp brightness up
+        info!("up!");
+        for i in LOW..=HIGH {
+            delay.delay_us(8);
+            let _ = channel.set_duty_cycle(i);
+        }
+
+        // Ramp brightness down
+        info!("down!");
+        for i in (LOW..=HIGH).rev() {
+            delay.delay_us(8);
+            let _ = channel.set_duty_cycle(i);
+        }
     }
 }
 
