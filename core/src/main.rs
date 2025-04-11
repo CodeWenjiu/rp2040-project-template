@@ -19,7 +19,7 @@ use rp_pico::{
 // use sparkfun_pro_micro_rp2040 as bsp;
 
 use bsp::hal::{
-    clocks::{init_clocks_and_plls, Clock},
+    clocks::{Clock, init_clocks_and_plls},
     pac,
     sio::Sio,
     watchdog::Watchdog,
@@ -33,8 +33,8 @@ const HIGH: u16 = 65535;
 
 #[entry]
 fn main() -> ! {
-    let exc = executer::executer::new();
     info!("Program start");
+    let _exc = executer::Executer::new();
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
