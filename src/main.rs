@@ -33,6 +33,7 @@ const HIGH: u16 = 65535;
 
 #[entry]
 fn main() -> ! {
+    let exc = executer::executer::new();
     info!("Program start");
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
