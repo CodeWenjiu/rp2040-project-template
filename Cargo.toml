@@ -6,6 +6,8 @@ members = [ "core", "executer","marco"]
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
 embedded-hal = { version = "1.0.0" }
+embedded-hal-async = "1.0.0"
+embassy-executor = "0.7.0"
 
 defmt = "1.0.1"
 defmt-rtt = "1.0.0"
